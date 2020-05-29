@@ -1,0 +1,114 @@
+Example of openlayer
+https://github.com/Viglino/ol-ext/blob/master/examples/interaction/map.interaction.dragoverlay.html
+here how it's work
+https://viglino.github.io/ol-ext/examples/interaction/map.interaction.dragoverlay.html
+
+Some old example
+http://jsbin.com/agopa3/34/edit?html,js,output
+
+trarget example - 
+https://jsfiddle.net/jonataswalker/rnzgfg89/
+
+modification for good movemets
+
+HTML
+<div id="map" class="map"></div>
+<div id="msg">Dragging ol.Overlay</div>
+<div id="marker" title="Marker"></div>
+
+CSS
+
+html, body, #map { width:100%; height:100%; margin:0; }
+#map {
+    position: absolute;
+    z-index: 5;
+}
+#msg{
+    position: absolute;
+    z-index: 10;
+    left: 50%;
+    transform: translate(-50%, 5px);
+    background-color: rgba(40,40,40,.8);
+    padding: 10px;
+    color: #eee;
+    width: 350px;
+    text-align: center;
+}
+#marker {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #088;
+  border-radius: 10px;
+  background-color: #0FF;
+  opacity: 0.5;
+  cursor: move;
+}
+
+JS
+var pos = ol.proj.fromLonLat([16.3725, 48.208889]);
+var layer = new ol.layer.Tile({
+  source: new ol.source.OSM()
+});
+var map = new ol.Map({
+  layers: [layer],
+  target: 'map',
+  view: new ol.View({
+    center: pos,
+    zoom: 2
+  })
+});
+var marker_el = document.getElementById('marker');
+var marker = new ol.Overlay({
+  position: pos,
+  positioning: 'center-center',
+  element: marker_el,
+  stopEvent: false,
+  dragging: false
+});
+map.addOverlay(marker);
+
+var dragPan;
+let posXM = 0, posYM = 0;
+let posXP = 0, posYP = 0;
+let marker_pos = null;
+let pointer_pos = null;
+
+
+map.getInteractions().forEach(function(interaction){
+	if (interaction instanceof ol.interaction.DragPan) {
+		dragPan = interaction;  
+  }
+});
+
+marker_el.addEventListener('mousedown', function(evt) {
+  dragPan.setActive(false);
+  marker.set('dragging', true);
+  console.info('start dragging');
+});
+
+map.on('pointerdown', function(evt){
+  console.log("strat coord");
+  marker_pos = marker.getPosition();
+  posXP = evt.coordinate[0];
+  posYP = evt.coordinate[1];
+  posXM = marker_pos[0];
+  posYM = marker_pos[1];
+  posXM = posXP - posXM;
+  posYM = posYP - posYM;
+});
+
+map.on('pointermove', function(evt) {
+	if (marker.get('dragging') === true) {
+  	pointer_pos = evt.coordinate;
+    
+  	marker.setPosition([(pointer_pos[0] - posXM), (pointer_pos[1] - posYM)]);
+  }
+});
+
+map.on('pointerup', function(evt) {
+	if (marker.get('dragging') === true) {
+    console.info('stop dragging');
+    dragPan.setActive(true);
+    marker.set('dragging', false);
+  }
+});
